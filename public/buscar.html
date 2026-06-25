@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔍 Buscar Activo</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .search-container {
+      max-width: 700px;
+      margin: 50px auto;
+      text-align: center;
+    }
+    .result-card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      margin-top: 20px;
+      text-align: left;
+    }
+    .result-card h2 {
+      color: #1a237e;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 10px;
+    }
+    .result-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+    }
+    .result-item strong {
+      display: inline-block;
+      width: 160px;
+      color: #555;
+      flex-shrink: 0;
+    }
+    .result-item .value {
+      flex: 1;
+    }
+    .not-found {
+      color: #c62828;
+      font-size: 18px;
+      padding: 30px;
+    }
+    .responsable-section {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+    }
+    .responsable-section h3 {
+      color: #1a237e;
+      margin-bottom: 10px;
+    }
+    .status-badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+  <div class="search-container">
+    <h1>🔍 Buscar Activo por Código</h1>
+    <div class="search-bar">
+      <input type="text" id="buscarCodigo" placeholder="Ingresa el código del activo..." onkeypress="if(event.key==='Enter') buscarPorCodigo()">
+      <button class="btn-primary" onclick="buscarPorCodigo()">Buscar</button>
+    </div>
+    <div id="resultado"></div>
+    <br>
+    <a href="/" style="color: #1a237e;text-decoration:none;">← Volver al inventario</a>
+  </div>
+
+  <script>
+    async function buscarPorCodigo() {
+      const codigo = document.getElementById('buscarCodigo').value.trim();
+      const resultado = document.getElementById('resultado');
+      
+      if (!codigo) {
+        resultado.innerHTML = '<p class="not-found">⚠️ Ingresa un código para buscar</p>';
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/activos/${encodeURIComponent(codigo)}`);
+        
+        if (!response.ok) {
+          resultado.innerHTML = `
+            <div class="result-card">
+              <p class="not-found">❌ Activo no encontrado</p>
+              <p style="text-align:center;">Código: <strong>${codigo}</strong></p>
+            </div>
+          `;
+          return;
+        }
+
+        const activo = await response.json();
+        
+        // Determinar clase de estado
+        const estadoClass = `status-${activo.estado?.toLowerCase() || 'activo'}`;
+        
+        let responsableHTML = '';
+        if (activo.responsable_nombre) {
+          responsableHTML = `
+            <div class="responsable-section">
+              <h3>👤 Responsable del Activo</h3>
+              <div class="result-item"><strong>Nombre:</strong> <span class="value">${activo.responsable_nombre}</span></div>
+              ${activo.responsable_cedula ? `<div class="result-item"><strong>Cédula:</strong> <span class="value">${activo.responsable_cedula}</span></div>` : ''}
+              ${activo.responsable_cargo ? `<div class="result-item"><strong>Cargo:</strong> <span class="value">${activo.responsable_cargo}</span></div>` : ''}
+              ${activo.responsable_telefono ? `<div class="result-item"><strong>Teléfono:</strong> <span class="value">${activo.responsable_telefono}</span></div>` : ''}
+              ${activo.responsable_email ? `<div class="result-item"><strong>Email:</strong> <span class="value">${activo.responsable_email}</span></div>` : ''}
+              ${activo.fecha_asignacion ? `<div class="result-item"><strong>Fecha Asignación:</strong> <span class="value">${activo.fecha_asignacion}</span></div>` : ''}
+            </div>
+          `;
+        }
+        
+        resultado.innerHTML = `
+          <div class="result-card">
+            <h2>✅ Activo Encontrado</h2>
+            <div class="result-item"><strong>Código:</strong> <span class="value"><strong>${activo.codigo}</strong></span></div>
+            <div class="result-item"><strong>Nombre:</strong> <span class="value">${activo.nombre}</span></div>
+            <div class="result-item"><strong>Descripción:</strong> <span class="value">${activo.descripcion || '-'}</span></div>
+            <div class="result-item"><strong>Categoría:</strong> <span class="value">${activo.categoria_nombre || '-'}</span></div>
+            <div class="result-item"><strong>Empresa:</strong> <span class="value">${activo.empresa_nombre || 'Sin empresa'}</span></div>
+            <div class="result-item"><strong>Estado:</strong> <span class="value"><span class="status-badge ${estadoClass}">${activo.estado || 'ACTIVO'}</span></span></div>
+            <div class="result-item"><strong>Ubicación:</strong> <span class="value">${activo.ubicacion || '-'}</span></div>
+            <div class="result-item"><strong>Valor Compra:</strong> <span class="value">$${activo.valor_compra?.toLocaleString() || '0'}</span></div>
+            <div class="result-item"><strong>Valor Actual:</strong> <span class="value">$${activo.valor_actual?.toLocaleString() || '0'}</span></div>
+            <div class="result-item"><strong>Fecha Adquisición:</strong> <span class="value">${activo.fecha_adquisicion || '-'}</span></div>
+            <div class="result-item"><strong>Proveedor:</strong> <span class="value">${activo.proveedor || '-'}</span></div>
+            <div class="result-item"><strong>N° Serie:</strong> <span class="value">${activo.numero_serie || '-'}</span></div>
+            <div class="result-item"><strong>Garantía:</strong> <span class="value">${activo.garantia || '-'}</span></div>
+            ${responsableHTML}
+          </div>
+          ${activo.imagen_equipo || activo.imagen_serial ? `
+            <div class="imagen-container">
+            ${activo.imagen_equipo ? `
+                <div class="imagen-item">
+                <p>📷 Foto del Equipo</p>
+                <img src="${activo.imagen_equipo}" alt="Foto del equipo">
+                </div>
+            ` : ''}
+            ${activo.imagen_serial ? `
+                <div class="imagen-item">
+                <p>📷 Foto del Serial</p>
+                <img src="${activo.imagen_serial}" alt="Foto del serial">
+                </div>
+            ` : ''}
+            </div>
+            ` : ''}
+        `;
+      } catch (error) {
+        console.error('Error:', error);
+        resultado.innerHTML = '<p class="not-found">❌ Error al buscar el activo</p>';
+      }
+    }
+
+    // Si viene con parámetro en la URL
+    window.onload = function() {
+      const params = new URLSearchParams(window.location.search);
+      const codigo = params.get('codigo');
+      if (codigo) {
+        document.getElementById('buscarCodigo').value = codigo;
+        buscarPorCodigo();
+      }
+    };
+  </script>
+</body>
+</html>

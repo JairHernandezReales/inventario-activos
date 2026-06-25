@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🔐 Login - Inventario de Activos</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a237e 0%, #0d1442 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      padding: 50px;
+      max-width: 450px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      animation: slideUp 0.6s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(50px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .login-header .icon {
+      font-size: 60px;
+      margin-bottom: 10px;
+    }
+
+    .login-header h1 {
+      color: #1a237e;
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+
+    .login-header p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #1a237e;
+      box-shadow: 0 0 0 3px rgba(26, 35, 126, 0.1);
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: #1a237e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    .btn-login:hover {
+      background: #0d1442;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(26, 35, 126, 0.3);
+    }
+
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .login-footer {
+      text-align: center;
+      margin-top: 25px;
+      color: #999;
+      font-size: 13px;
+    }
+
+    .login-footer strong {
+      color: #1a237e;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .demo-info {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 25px;
+      font-size: 13px;
+    }
+
+    .demo-info p {
+      margin: 5px 0;
+      color: #555;
+    }
+
+    .demo-info .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-admin {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .badge-viewer {
+      background: #e3f2fd;
+      color: #0d47a1;
+    }
+
+    @media (max-width: 500px) {
+      .login-container {
+        padding: 30px 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <div class="icon">🔐</div>
+      <h1>Inventario de Activos</h1>
+      <p>Ingresa tus credenciales para continuar</p>
+    </div>
+
+    <div id="errorMessage" class="error-message">
+      ❌ <span id="errorText">Usuario o contraseña incorrectos</span>
+    </div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label>👤 Usuario</label>
+        <input type="text" id="username" placeholder="Ingresa tu usuario" required autofocus>
+      </div>
+
+      <div class="form-group">
+        <label>🔑 Contraseña</label>
+        <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
+      </div>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        <span id="loginText">Iniciar Sesión</span>
+      </button>
+    </form>
+
+    <div class="login-footer">
+      Sistema de Inventario de Activos Fijos v2.0
+    </div>
+  </div>
+
+  <script>
+    async function handleLogin(event) {
+      event.preventDefault();
+      
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const errorMessage = document.getElementById('errorMessage');
+      const errorText = document.getElementById('errorText');
+      const loginBtn = document.getElementById('loginBtn');
+      const loginText = document.getElementById('loginText');
+
+      // Ocultar error anterior
+      errorMessage.classList.remove('show');
+
+      // Validar campos
+      if (!username || !password) {
+        errorText.textContent = 'Por favor, completa todos los campos';
+        errorMessage.classList.add('show');
+        return;
+      }
+
+      // Mostrar loading
+      loginBtn.disabled = true;
+      loginText.innerHTML = '<span class="loading-spinner"></span> Verificando...';
+
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Login exitoso
+          window.location.href = '/';
+        } else {
+          // Error de login
+          errorText.textContent = data.error || 'Usuario o contraseña incorrectos';
+          errorMessage.classList.add('show');
+          loginBtn.disabled = false;
+          loginText.textContent = 'Iniciar Sesión';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        errorText.textContent = 'Error al conectar con el servidor';
+        errorMessage.classList.add('show');
+        loginBtn.disabled = false;
+        loginText.textContent = 'Iniciar Sesión';
+      }
+    }
+
+    // Permitir login con Enter
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        const form = document.getElementById('loginForm');
+        if (document.activeElement === document.getElementById('username') || 
+            document.activeElement === document.getElementById('password')) {
+          form.dispatchEvent(new Event('submit'));
+        }
+      }
+    });
+  </script>
+</body>
+</html>
