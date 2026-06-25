@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📊 Inventario de Activos Fijos</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+  <div class="header-left">
+    <h1>📊 Sistema de Inventario de Activos Fijos</h1>
+    <div class="user-info" id="userInfo">
+      <span id="userName"></span>
+      <span class="rol-badge" id="userRol"></span>
+      <button onclick="cerrarSesion()" class="btn-logout">🚪 Salir</button>
+    </div>
+  </div>
+  <div class="header-actions" id="headerActions">
+    <button onclick="mostrarFormulario()" class="btn-primary" id="btnNuevoActivo">➕ Nuevo Activo</button>
+    <button onclick="mostrarEmpresas()" class="btn-secondary" id="btnEmpresas">🏢 Empresas</button>
+    <button onclick="mostrarCategorias()" class="btn-secondary" id="btnCategorias">📂 Categorías</button>
+    <button onclick="mostrarUsuarios()" class="btn-secondary" id="btnUsuarios" style="display:none;">👥 Usuarios</button>
+  </div>
+</header>
+
+    <!-- Barra de búsqueda -->
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="🔍 Buscar por código, nombre, responsable o empresa..." onkeyup="buscarActivos()">
+      <select id="filterEmpresa" onchange="buscarActivos()">
+        <option value="">Todas las empresas</option>
+      </select>
+      <select id="filterCategoria" onchange="buscarActivos()">
+        <option value="">Todas las categorías</option>
+      </select>
+      <select id="filterEstado" onchange="buscarActivos()">
+        <option value="">Todos los estados</option>
+        <option value="ACTIVO">ACTIVO</option>
+        <option value="ASIGNADO">ASIGNADO</option>
+        <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+        <option value="BAJA">BAJA</option>
+        <option value="PRESTADO">PRESTADO</option>
+      </select>
+    </div>
+
+    <!-- Tabla de activos -->
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Empresa</th>
+            <th>Responsable</th>
+            <th>Estado</th>
+            <th>Valor</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="activosTable">
+          <tr><td colspan="8" class="loading">Cargando activos...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal Formulario Activo -->
+  <div id="modalForm" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModal()">&times;</span>
+      <h2 id="modalTitle">Registrar Nuevo Activo</h2>
+      <form id="activoForm" onsubmit="guardarActivo(event)">
+        <input type="hidden" id="activoId">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Código</label>
+            <div style="display:flex;gap:10px;">
+              <input type="text" id="codigo" placeholder="Automático o manual" style="flex:1;">
+              <button type="button" class="btn-secondary" onclick="generarCodigoAuto()" style="white-space:nowrap;">🔢 Auto</button>
+            </div>
+            <small style="color:#666;">Se genera automático al seleccionar empresa</small>
+          </div>
+          <div class="form-group">
+            <label>Nombre *</label>
+            <input type="text" id="nombre" required placeholder="Nombre del activo">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Descripción</label>
+            <input type="text" id="descripcion" placeholder="Descripción detallada">
+          </div>
+          <div class="form-group">
+            <label>Categoría</label>
+            <select id="categoria_id">
+              <option value="">Seleccionar categoría</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Empresa *</label>
+            <select id="empresa_id" required onchange="generarCodigoAuto()">
+              <option value="">Seleccionar empresa</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Estado</label>
+            <select id="estado">
+              <option value="ACTIVO">ACTIVO</option>
+              <option value="ASIGNADO">ASIGNADO</option>
+              <option value="MANTENIMIENTO">MANTENIMIENTO</option>
+              <option value="BAJA">BAJA</option>
+              <option value="PRESTADO">PRESTADO</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fecha Adquisición</label>
+            <input type="date" id="fecha_adquisicion">
+          </div>
+          <div class="form-group">
+            <label>Ubicación</label>
+            <input type="text" id="ubicacion" placeholder="Ej: Oficina 301, Bodega A">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Valor Compra ($)</label>
+            <input type="number" id="valor_compra" step="0.01" placeholder="0.00">
+          </div>
+          <div class="form-group">
+            <label>Valor Actual ($)</label>
+            <input type="number" id="valor_actual" step="0.01" placeholder="0.00">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Proveedor</label>
+            <input type="text" id="proveedor" placeholder="Nombre del proveedor">
+          </div>
+          <div class="form-group">
+            <label>N° Serie</label>
+            <input type="text" id="numero_serie" placeholder="Número de serie">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Garantía</label>
+          <input type="text" id="garantia" placeholder="Ej: 1 año, 24 meses...">
+        </div>
+
+        <!-- Sección Responsable -->
+        <hr style="margin:20px 0;border-color:#e0e0e0;">
+        <h3 style="color:#1a237e;margin-bottom:15px;">👤 Responsable del Activo</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nombre del Responsable</label>
+            <input type="text" id="responsable_nombre" placeholder="Nombre completo">
+          </div>
+          <div class="form-group">
+            <label>Cédula</label>
+            <input type="text" id="responsable_cedula" placeholder="Número de cédula">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Cargo</label>
+            <input type="text" id="responsable_cargo" placeholder="Cargo del responsable">
+          </div>
+          <div class="form-group">
+            <label>Teléfono</label>
+            <input type="text" id="responsable_telefono" placeholder="Teléfono de contacto">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="responsable_email" placeholder="Email del responsable">
+          </div>
+          <div class="form-group">
+            <label>Fecha Asignación</label>
+            <input type="date" id="fecha_asignacion">
+          </div>
+        </div>
+
+        <!-- Sección Imágenes -->
+        <hr style="margin:20px 0;border-color:#e0e0e0;">
+        <h3 style="color:#1a237e;margin-bottom:15px;">🖼️ Imágenes del Activo</h3>
+
+        <div class="form-row">
+        <div class="form-group">
+            <label>Foto del Equipo</label>
+            <input type="file" id="imagen_equipo" accept="image/*" onchange="previewImage(this, 'preview_equipo')">
+            <small style="color:#666;">Formatos: JPG, PNG, GIF, WEBP (Max 5MB)</small>
+            <div id="preview_equipo" class="image-preview"></div>
+            <input type="hidden" id="imagen_equipo_actual" value="">
+        </div>
+        <div class="form-group">
+            <label>Foto del Serial</label>
+            <input type="file" id="imagen_serial" accept="image/*" onchange="previewImage(this, 'preview_serial')">
+            <small style="color:#666;">Formatos: JPG, PNG, GIF, WEBP (Max 5MB)</small>
+            <div id="preview_serial" class="image-preview"></div>
+            <input type="hidden" id="imagen_serial_actual" value="">
+        </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">💾 Guardar Activo</button>
+          <button type="button" class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal QR -->
+  <div id="modalQR" class="modal">
+    <div class="modal-content qr-modal">
+      <span class="close" onclick="cerrarModalQR()">&times;</span>
+      <h2>📱 Código QR del Activo</h2>
+      <div id="qrContainer" class="qr-container">
+        <img id="qrImage" src="" alt="QR Code">
+        <p><strong>Código:</strong> <span id="qrCodigo"></span></p>
+        <p><strong>Activo:</strong> <span id="qrNombre"></span></p>
+        <p><strong>Empresa:</strong> <span id="qrEmpresa"></span></p>
+        <p><strong>Responsable:</strong> <span id="qrResponsable"></span></p>
+      </div>
+      <div class="qr-actions">
+        <button onclick="imprimirQR()" class="btn-primary">🖨️ Imprimir QR</button>
+        <button onclick="descargarQR()" class="btn-secondary">⬇️ Descargar QR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Empresas -->
+  <div id="modalEmpresas" class="modal">
+    <div class="modal-content" style="max-width:800px;">
+      <span class="close" onclick="cerrarModalEmpresas()">&times;</span>
+      <h2>🏢 Gestión de Empresas</h2>
+      <button onclick="mostrarFormularioEmpresa()" class="btn-primary" style="margin-bottom:20px;" id="btnNuevaEmpresa">➕ Nueva Empresa</button>
+      <div id="empresasList"></div>
+    </div>
+  </div>
+
+  <!-- Modal Formulario Empresa -->
+  <div id="modalFormEmpresa" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+      <span class="close" onclick="cerrarFormularioEmpresa()">&times;</span>
+      <h2 id="modalEmpresaTitle">Nueva Empresa</h2>
+      <form id="empresaForm" onsubmit="guardarEmpresaForm(event)">
+        <input type="hidden" id="empresaId">
+        
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input type="text" id="empresaNombre" required placeholder="Nombre de la empresa">
+        </div>
+        
+        <div class="form-group">
+          <label>NIT</label>
+          <input type="text" id="empresaNit" placeholder="NIT de la empresa">
+        </div>
+        
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input type="text" id="empresaTelefono" placeholder="Teléfono de contacto">
+        </div>
+        
+        <div class="form-group">
+          <label>Dirección</label>
+          <input type="text" id="empresaDireccion" placeholder="Dirección de la empresa">
+        </div>
+        
+        <div class="form-group">
+          <label>Prefijo para códigos</label>
+          <input type="text" id="empresaPrefijo" placeholder="Ej: ACT, COMP" maxlength="5">
+          <small style="color:#666;">Se usará para generar códigos automáticos</small>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">💾 Guardar Empresa</button>
+          <button type="button" class="btn-secondary" onclick="cerrarFormularioEmpresa()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Confirmación Eliminar Empresa -->
+  <div id="modalConfirmEmpresa" class="modal">
+    <div class="modal-content" style="max-width:450px;text-align:center;">
+      <span class="close" onclick="cerrarConfirmEmpresa()">&times;</span>
+      <div style="font-size:48px;margin:20px 0;">⚠️</div>
+      <h2 style="color:#c62828;">¿Eliminar Empresa?</h2>
+      <p id="confirmEmpresaMsg" style="margin:20px 0;font-size:16px;">¿Estás seguro de eliminar esta empresa?</p>
+      <div class="form-actions" style="justify-content:center;">
+        <button onclick="confirmarEliminarEmpresa()" class="btn-danger" style="padding:10px 30px;">✅ Sí, Eliminar</button>
+        <button onclick="cerrarConfirmEmpresa()" class="btn-secondary" style="padding:10px 30px;">❌ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Categorías -->
+  <div id="modalCategorias" class="modal">
+    <div class="modal-content" style="max-width:800px;">
+      <span class="close" onclick="cerrarModalCategorias()">&times;</span>
+      <h2>📂 Gestión de Categorías</h2>
+      <button onclick="mostrarFormularioCategoria()" class="btn-primary" style="margin-bottom:20px;" id="btnNuevaCategoria">➕ Nueva Categoría</button>
+      <div id="categoriasList"></div>
+    </div>
+  </div>
+
+  <!-- Modal Formulario Categoría -->
+  <div id="modalFormCategoria" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+      <span class="close" onclick="cerrarFormularioCategoria()">&times;</span>
+      <h2 id="modalCategoriaTitle">Nueva Categoría</h2>
+      <form id="categoriaForm" onsubmit="guardarCategoriaForm(event)">
+        <input type="hidden" id="categoriaId">
+        
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input type="text" id="categoriaNombre" required placeholder="Nombre de la categoría">
+        </div>
+        
+        <div class="form-group">
+          <label>Descripción</label>
+          <input type="text" id="categoriaDescripcion" placeholder="Descripción de la categoría">
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">💾 Guardar Categoría</button>
+          <button type="button" class="btn-secondary" onclick="cerrarFormularioCategoria()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Confirmación Eliminar Categoría -->
+  <div id="modalConfirmCategoria" class="modal">
+    <div class="modal-content" style="max-width:450px;text-align:center;">
+      <span class="close" onclick="cerrarConfirmCategoria()">&times;</span>
+      <div style="font-size:48px;margin:20px 0;">⚠️</div>
+      <h2 style="color:#c62828;">¿Eliminar Categoría?</h2>
+      <p id="confirmCategoriaMsg" style="margin:20px 0;font-size:16px;">¿Estás seguro de eliminar esta categoría?</p>
+      <div class="form-actions" style="justify-content:center;">
+        <button onclick="confirmarEliminarCategoria()" class="btn-danger" style="padding:10px 30px;">✅ Sí, Eliminar</button>
+        <button onclick="cerrarConfirmCategoria()" class="btn-secondary" style="padding:10px 30px;">❌ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Usuarios -->
+  <div id="modalUsuarios" class="modal">
+    <div class="modal-content" style="max-width:800px;">
+      <span class="close" onclick="cerrarModalUsuarios()">&times;</span>
+      <h2>👥 Gestión de Usuarios</h2>
+      <button onclick="mostrarFormularioUsuario()" class="btn-primary" style="margin-bottom:20px;">➕ Nuevo Usuario</button>
+      <div id="usuariosList"></div>
+    </div>
+  </div>
+
+  <!-- Modal Formulario Usuario -->
+  <div id="modalFormUsuario" class="modal">
+    <div class="modal-content" style="max-width:500px;">
+      <span class="close" onclick="cerrarFormularioUsuario()">&times;</span>
+      <h2 id="modalUsuarioTitle">Nuevo Usuario</h2>
+      <form id="usuarioForm" onsubmit="guardarUsuarioForm(event)">
+        <input type="hidden" id="usuarioId">
+        
+        <div class="form-group">
+          <label>Usuario *</label>
+          <input type="text" id="usuarioUsername" required placeholder="Nombre de usuario">
+        </div>
+        
+        <div class="form-group">
+          <label>Nombre *</label>
+          <input type="text" id="usuarioNombre" required placeholder="Nombre completo">
+        </div>
+        
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="usuarioEmail" placeholder="Email del usuario">
+        </div>
+        
+        <div class="form-group">
+          <label>Contraseña</label>
+          <input type="password" id="usuarioPassword" placeholder="Contraseña (dejar en blanco para no cambiar)">
+          <small style="color:#666;">Mínimo 6 caracteres</small>
+        </div>
+        
+        <div class="form-group">
+          <label>Rol</label>
+          <select id="usuarioRol">
+            <option value="viewer">👁️ Viewer - Solo lectura</option>
+            <option value="editor">✏️ Editor - Puede crear y editar</option>
+            <option value="admin">👑 Admin - Todos los permisos</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>Estado</label>
+          <select id="usuarioActivo">
+            <option value="1">✅ Activo</option>
+            <option value="0">❌ Inactivo</option>
+          </select>
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">💾 Guardar Usuario</button>
+          <button type="button" class="btn-secondary" onclick="cerrarFormularioUsuario()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Confirmación Eliminar Usuario -->
+  <div id="modalConfirmUsuario" class="modal">
+    <div class="modal-content" style="max-width:450px;text-align:center;">
+      <span class="close" onclick="cerrarConfirmUsuario()">&times;</span>
+      <div style="font-size:48px;margin:20px 0;">⚠️</div>
+      <h2 style="color:#c62828;">¿Eliminar Usuario?</h2>
+      <p id="confirmUsuarioMsg" style="margin:20px 0;font-size:16px;">¿Estás seguro de eliminar este usuario?</p>
+      <div class="form-actions" style="justify-content:center;">
+        <button onclick="confirmarEliminarUsuario()" class="btn-danger" style="padding:10px 30px;">✅ Sí, Eliminar</button>
+        <button onclick="cerrarConfirmUsuario()" class="btn-secondary" style="padding:10px 30px;">❌ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- Modal Confirmación Cerrar Sesión -->
+  <div id="modalConfirmLogout" class="modal">
+    <div class="modal-content" style="max-width:450px;text-align:center;">
+      <span class="close" onclick="cerrarConfirmLogout()">&times;</span>
+      <div style="font-size:48px;margin:20px 0;">🚪</div>
+      <h2 style="color:#1a237e;">Cerrar Sesión</h2>
+      <p style="margin:20px 0;font-size:16px;color:#555;">
+        ¿Estás seguro de que quieres cerrar sesión?
+      </p>
+      <div class="form-actions" style="justify-content:center;">
+        <button onclick="confirmarLogout()" class="btn-danger" style="padding:10px 30px;">✅ Sí, Cerrar Sesión</button>
+        <button onclick="cerrarConfirmLogout()" class="btn-secondary" style="padding:10px 30px;">❌ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

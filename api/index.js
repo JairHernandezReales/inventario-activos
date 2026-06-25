@@ -29,7 +29,7 @@ app.use(express.static('public'));
 
 // Configuración de sesión para Vercel
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'tu_clave_secreta_muy_segura',
+  secret: process.env.SESSION_SECRET || 'JotaDev@16*',
   resave: false,
   saveUninitialized: false,
   cookie: {
